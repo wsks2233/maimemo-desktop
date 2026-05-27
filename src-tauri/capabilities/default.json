@@ -1,0 +1,27 @@
+{
+  "identifier": "default",
+  "description": "Default capabilities for Maimemo Desktop",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "shell:allow-open",
+    "http:default",
+    {
+      "identifier": "http:allow-fetch",
+      "description": "Allow fetching from Maimemo API",
+      "allow": [
+        {
+          "url": "https://open.maimemo.com/**"
+        }
+      ]
+    },
+    {
+      "identifier": "http:allow-fetch-cancel",
+      "description": "Allow cancelling fetch requests"
+    },
+    {
+      "identifier": "http:allow-fetch-read-body",
+      "description": "Allow reading fetch response body"
+    }
+  ]
+}

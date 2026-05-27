@@ -1,14 +1,36 @@
 <script setup lang="ts">
-import { onMounted, computed } from 'vue'
+import { onMounted, computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStudyStore } from '../stores/study'
+import client from '../api/client'
 
 const router = useRouter()
 const store = useStudyStore()
+const showDebug = ref(false)
+const debugInfo = ref('')
 
 onMounted(async () => {
   await Promise.all([store.fetchProgress(), store.fetchTodayItems()])
 })
+
+async function fetchDebug() {
+  try {
+    const [progressRes, itemsRes, recordsRes] = await Promise.all([
+      client.post('/study/get_study_progress'),
+      client.post('/study/get_today_items', {}),
+      client.post('/study/query_study_records', { limit: 5 }),
+    ])
+    debugInfo.value = JSON.stringify({
+      progress: progressRes.data,
+      todayItems: itemsRes.data,
+      records: recordsRes.data,
+    }, null, 2)
+    showDebug.value = true
+  } catch (e: any) {
+    debugInfo.value = `Error: ${e.message}\n${JSON.stringify(e.response?.data, null, 2)}`
+    showDebug.value = true
+  }
+}
 
 const progressPercent = computed(() => {
   if (!store.progress || store.progress.total === 0) return 0
@@ -81,7 +103,18 @@ const studyTimeFormatted = computed(() => {
       <div v-if="store.loading" class="loading">加载中...</div>
 
       <div v-else-if="store.todayItems.length === 0" class="empty">
-        今日暂无学习单词，请先在墨墨 App 中学习
+        <p>今日暂无学习单词</p>
+        <p class="empty-hint">请先在手机上打开墨墨 App 并开启自动同步</p>
+        <button class="btn-debug" @click="fetchDebug">查看 API 原始返回</button>
+      </div>
+
+      <!-- 调试面板 -->
+      <div v-if="showDebug" class="debug-panel">
+        <div class="debug-header">
+          <span>API 原始返回数据</span>
+          <button class="btn-close" @click="showDebug = false">×</button>
+        </div>
+        <pre class="debug-content">{{ debugInfo }}</pre>
       </div>
 
       <div v-else class="word-list">
@@ -248,5 +281,64 @@ const studyTimeFormatted = computed(() => {
 .badge-pending {
   background: var(--glass);
   color: var(--text-secondary);
+}
+
+.empty-hint {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 8px;
+}
+
+.btn-debug {
+  margin-top: 16px;
+  background: var(--glass);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 6px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.btn-debug:hover {
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.debug-panel {
+  margin-top: 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.debug-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.debug-content {
+  padding: 16px;
+  font-size: 12px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  color: var(--text-secondary);
+  max-height: 300px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 </style>

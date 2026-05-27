@@ -88,12 +88,6 @@ function getRecordsForDate(date: string) {
   </div>
 </template>
 
-<script lang="ts">
-import { useStudyStore } from '../stores/study'
-import { useReviewStore } from '../stores/review'
-import { computed } from 'vue'
-</script>
-
 <style scoped>
 .stats {
   max-width: 900px;
